@@ -1,0 +1,58 @@
+---
+- name: Deny everything and enable UFW
+  community.general.ufw:
+    state: enabled
+    policy: deny
+
+- name: Limit OpenSSH for MGMT
+  community.general.ufw:
+    rule: limit
+    name: OpenSSH
+
+- name: Limit HTTP for CertBot
+  community.general.ufw:
+    rule: limit
+    port: 80
+    proto: tcp
+    delete: false
+
+- name: Trust RFC1918
+  community.general.ufw:
+    rule: allow
+    from_ip: "{{ item }}"
+  loop:
+    - 10.0.0.0/8
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+  when:
+    - fwtrust is defined
+    - fwtrust.rfc1819 is defined
+    - fwtrust.rfc1819 == true
+
+- name: Trust RFC3927
+  community.general.ufw:
+    rule: allow
+    from_ip: 169.254.0.0/16
+  when:
+    - fwtrust is defined
+    - fwtrust.rfc3927 is defined
+    - fwtrust.rfc3927 == true
+
+- name: Trust RFC4291
+  community.general.ufw:
+    rule: allow
+    from_ip: fe80::/10
+  when:
+    - fwtrust is defined
+    - fwtrust.rfc4291 is defined
+    - fwtrust.rfc4291 == true
+
+- name: Allowed Ports
+  community.general.ufw:
+    rule: "{{ item.0.rule | default('allow') }}"
+    port: "{{ item.0.port }}"
+    proto: "{{ item.0.proto }}"
+    from_ip: "{{ item.1 | default('any') }}"
+    delete: "{{ item.0.delete | default(false) }}"
+  loop: "{{ fwpolicy|subelements('src', {'skip_missing': True}) }}"
+  when: fwpolicy is defined

@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Ansible: sensitive files
+inventory
+host_vars/
+group_vars/
+bootstrap.*

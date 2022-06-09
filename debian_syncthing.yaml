@@ -1,0 +1,33 @@
+---
+- name: Syncthing Keyring
+  ansible.builtin.apt_key:
+    url: https://syncthing.net/release-key.gpg
+    keyring: /usr/share/keyrings/syncthing-archive-keyring.gpg
+    state: present
+  when: syncthing is defined
+
+- ansible.posix.sysctl:
+    name: fs.inotify.max_user_watches
+    value: '204800'
+    sysctl_set: yes
+  when: syncthing is defined
+
+- name: Syncthing Repo
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing {{ syncthing.channel }}
+    state: present
+  when: syncthing is defined and syncthing.channelsyncthing.channel is defined
+
+- name: Install Syncthing
+  ansible.builtin.apt:
+    name: syncthing
+    state: latest
+    update_cache: true
+  when: syncthing is defined and syncthing.channel is defined
+
+- name: Syncthing Service
+  ansible.builtin.systemd:
+    name: syncthing@{{ syncthing.user }}
+    state: started
+    enabled: true
+  when: syncthing is defined and syncthing.user is defined

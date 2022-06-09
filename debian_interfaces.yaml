@@ -1,0 +1,24 @@
+---
+- name: debug available interfaces
+  ansible.builtin.debug:
+    msg: '{{ ansible_facts.interfaces }}'
+  when: interface is not defined
+
+- name: /etc/network/interfaces
+  ansible.builtin.copy:
+    content: source /etc/network/interfaces.d/*
+    dest: /etc/network/interfaces
+    owner: root
+    group: root
+    mode: '0644'
+  when: interface is defined
+
+- name: configure interfaces
+  ansible.builtin.copy:
+    content: "{{ lookup('template', './interface.j2') }}"
+    dest: /etc/network/interfaces.d/{{ item }}
+    owner: root
+    group: root
+    mode: '0644'
+  loop: '{{ interface|list }}'
+  when: interface is defined

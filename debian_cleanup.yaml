@@ -1,0 +1,8 @@
+---
+- name: "Purge debian packages"
+  ansible.builtin.apt:
+    pkg:
+      - geoip-bin
+      - geoip-database
+    state: absent
+    purge: yes

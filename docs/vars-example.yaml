@@ -1,0 +1,46 @@
+--
+fwpolicy:
+- delete: false
+  port: 443
+  proto: tcp
+  src:
+  - any
+fwtrust:
+  rfc1819: true
+  rfc3927: true
+  rfc4291: true
+interface:
+  eth0:
+    inet:
+      method: dhcp
+  eth1: null
+  lo:
+    inet:
+      method: loopback
+  vti75:
+    inet:
+      config: |
+        pre-up    ip tunnel add $IFACE remote 203.0.113.75 mode vti key 75
+        post-up   ipsec reload
+        post-down ip tunnel del $IFACE
+      method: manual
+    psk: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    remote: 203.0.113.75
+maxmind:
+  id: 00000000
+  key: XXXXXXXXXXXXXXXX
+snmp:
+  community: public
+  contact: root@host.example.com
+  location: in the basement
+syncthing:
+  channel: stable
+  listen: '[::]:18384'
+  user: yourname
+users:
+- group: users
+  groups: dialout,sudo
+  key: ssh-rsa AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+  name: yourname
+  shell: /bin/bash
+  uid: 1000

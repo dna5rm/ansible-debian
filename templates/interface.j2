@@ -1,0 +1,16 @@
+{%- set intf = interface | json_query(item) -%}
+# {{ ansible_managed }}: host_vars/{{ inventory_hostname }}.yaml :: interface.{{ item }}
+{% if intf != none %}
+
+auto {{ item }}
+{# IPv4 Configuration #}
+{% if intf.inet is defined %}
+iface {{ item }} inet {{ intf.inet.method | default('manual') }}
+{% if intf.inet.config is defined %}{% filter indent(width=2) %}  {{ intf.inet.config }}{% endfilter %}{% endif %}
+{%- endif -%}
+{# IPv6 Configuration #}
+{% if intf.inet6 is defined %}
+iface {{ item }} inet6 {{ intf.inet6.method | default('manual') }}
+{% if intf.inet6.config is defined %}{% filter indent(width=2) %}  {{ intf.inet6.config }}{% endfilter %}{% endif %}
+{%- endif -%}
+{%- endif -%}

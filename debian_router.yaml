@@ -1,0 +1,64 @@
+---
+- name: debian router packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - bridge-utils
+    - conntrack
+    - frr
+    - ifenslave
+    - isc-dhcp-server
+    - lldpd
+    - snmp
+    - snmpd
+    - snmp-mibs-downloader
+    - strongswan
+    - vlan
+  notify: network services
+
+- name: configure snmpd
+  ansible.builtin.copy:
+    content: "{{ lookup('template', './snmpd_conf.j2') }}"
+    dest: /etc/snmp/snmpd.conf
+    owner: root
+    group: root
+    mode: '0600'
+  when: snmp is defined
+
+- name: configure strongswan
+  ansible.builtin.copy:
+    content: "{{ lookup('template', './strongswan_conf.j2') }}"
+    dest: /etc/strongswan.d/ancillary.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: interface|list is search("vti*")
+
+- name: configure strongswan ipsec.conf
+  ansible.builtin.copy:
+    content: "{{ lookup('template', './strongswan_ipsec.j2') }}"
+    dest: /etc/ipsec.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when: interface|list is search("vti*")
+
+- name: configure strongswan ipsec.secrets
+  ansible.builtin.copy:
+    content: "{{ lookup('template', './strongswan_secrets.j2') }}"
+    dest: /etc/ipsec.secrets
+    owner: root
+    group: root
+    mode: '0600'
+  when: interface|list is search("vti*")
+
+- name: vti interface disable_policy
+  ansible.posix.sysctl:
+    name: net.ipv4.conf.{{ item }}.disable_policy
+    value: '1'
+    sysctl_set: yes
+  loop: '{{ interface|list }}'
+  when:
+    - interface is defined
+    - item is match("vti*")

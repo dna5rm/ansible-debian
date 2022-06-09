@@ -1,0 +1,37 @@
+## Wipe Drive ##
+dd if=/dev/urandom of=/dev/sda bs=1M count=2
+fdisk -l /dev/sda
+
+## Create Key ##
+function genpasswd () { local l=$1; [ "$l" == "" ] && l=20; tr -dc A-Za-z0-9_ < /dev/urandom | head -c ${l} | xargs; }
+genpasswd 512 > luks.key
+
+## luksFormat (run once) ##
+cryptsetup --batch-mode luksFormat /dev/sda --key-file "luks.key"
+
+## luksOpen ##
+cryptsetup --batch-mode luksOpen /dev/sda FIT --key-file "luks.key"
+
+## Verification ##
+cryptsetup status FIT
+cryptsetup luksDump /dev/sda
+cryptsetup config /dev/sda
+
+## dd+luksAddKey ##
+dd if=/dev/urandom of="/etc/.crypt.bin" bs=4096 count=1
+cryptsetup luksAddKey /dev/sda "/etc/.crypt.bin" --key-file "crypt.key"
+
+## Build Filesystem ##
+mkfs -t ext4 "/dev/mapper/$(blkid /dev/sda -s UUID -o value)"
+#e2label /dev/mapper/FIT 250GB
+
+## luksClose ##
+cryptsetup luksClose "FIT"
+
+## luksOpen ##
+cryptsetup luksOpen /dev/sda "$(blkid /dev/sda -s UUID -o value)" --key-file "/etc/.crypt.bin"
+cryptsetup luksClose "$(blkid /dev/sda -s UUID -o value)"
+
+## Update crypttab ##
+printf "$(blkid /dev/sda -s UUID -o value) UUID=\"$(blkid /dev/sda -s UUID -o value)\" /etc/.crypt.bin luks\n" >> "/etc/crypttab"
+printf "# crypttab mount\n/dev/mapper/$(blkid /dev/sda -s UUID -o value) /mnt ext4 defaults,nofail 0 0\n" >> "/etc/crypttab"

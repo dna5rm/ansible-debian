@@ -1,0 +1,35 @@
+# ipsec.conf - strongSwan IPsec configuration file
+
+# basic configuration
+
+config setup
+
+# connection defaults
+
+conn %default
+      rightsubnet=0.0.0.0/0
+      leftsubnet=0.0.0.0/0
+      ike=aes256-sha1-modp2048!
+      keyexchange=ikev2
+      reauth=no
+      ikelifetime=28800s
+      closeaction=none
+      esp=aes256-sha1-modp2048!
+      keylife=3600s
+      rekeymargin=540s
+      type=tunnel
+      compress=no
+      authby=secret
+      auto=route
+      keyingtries=1
+
+# peer configurations
+{% for item in interface|list %}{% if item.startswith('vti') %}
+{% set intf = interface | json_query(item) %}
+
+# interface {{ item }} to {{ intf.remote }}
+conn {{ item }}
+      left=%defaultroute
+      right={{ intf.remote }}
+      mark={{ item | regex_replace('^vti', '') }}
+{% endif %}{% endfor %}

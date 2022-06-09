@@ -1,0 +1,138 @@
+#!/usr/bin/env -S ansible-playbook -i inventory
+---
+- name: Perform backup of remote host.
+  hosts: root
+  become: yes
+  gather_facts: yes
+
+  vars:
+
+    BACKUP_DIR: /mnt/backup
+
+  tasks:
+
+  - name: "GET user running the playbook."
+    local_action: command whoami
+    become: no
+    changed_when: False
+    register: WHOAMI
+
+#  - name: "Validate BACKUP_DIR & its permissions."
+#    file:
+#      path: "{{ BACKUP_DIR }}/{{ inventory_hostname }}"
+#      state: directory
+#      owner: "{{ WHOAMI.stdout }}"
+#      mode: 0700
+#    delegate_to: localhost
+#    when: (BACKUP_DIR is defined)
+
+  - name: "Initialize FILES list"
+    set_fact: FILES=[]
+
+  - name: "Create user home archives on server."
+    shell: |
+      for SRC in /root $(find /home -maxdepth 1 -mindepth 1 -type d)
+       do DEST="/tmp/$(echo ${SRC} | awk -v DATE=$(date +"%Y%m%d") -F'/' '{print $(NF-1)"_"$NF"_"DATE".tar.xz"}' | sed 's/^_//')"
+          tar cfP - "${SRC}" | xz > "${DEST}" && \
+          if [ "$(du -m "${DEST}" | cut -f1)"  -ge "100" ]
+           then split -d -b 50M "${DEST}" "${DEST}.part"
+                rm "${DEST}" && find "${DEST}"*
+           else echo "${DEST}"
+          fi
+      done 2> /dev/null
+    register: USER_FILES
+
+  - name: "Add user home archives to FILES list."
+    set_fact:
+      FILES: "{{ FILES }} + [ '{{ item }}' ]"
+    with_items: "{{ USER_FILES.stdout_lines }}"
+    when: (USER_FILES is defined) and (USER_FILES.stdout_lines is defined)
+
+  - name: "Check if MySQL is installed."
+    stat:
+      path: /usr/bin/mysql
+    when: (FILES is defined)
+    register: MYSQL
+
+  # I'm only intrested in backing up DB's prefixed with "wp_"
+
+  - name: "Create MySQL DB archives on server."
+    shell: |
+      for SRC in $(mysql --execute="show databases like 'wp_%'" | sed '1d')
+       do DEST="/tmp/${SRC}_$(date +%Y%m%d).sql.xz"
+          mysqldump "${SRC}" | xz > "${DEST}" && \
+          if [ "$(du -m "${DEST}" | cut -f1)"  -ge "100" ]
+           then split -d -b 50M "${DEST}" "${DEST}.part"
+                rm "${DEST}" && find "${DEST}"*
+           else echo "${DEST}"
+          fi
+      done 2> /dev/null
+    when: (MYSQL.stat.exists)
+    register: DB_FILES
+
+  - name: "Add MySQL DB archives to FILES list..."
+    set_fact:
+      FILES: "{{ FILES }} + [ '{{ item }}' ]"
+    with_items: "{{ DB_FILES.stdout_lines }}"
+    when: (DB_FILES is defined) and (DB_FILES.stdout_lines is defined)
+
+  - name: "Check if Apache2 is installed."
+    stat:
+      path: /etc/apache2
+    when: (FILES is defined)
+    register: APACHE
+
+  - name: "Create Apache2 archives on server."
+    shell: |
+      for SRC in /etc/apache2 /etc/letsencrypt $(find /var/www -maxdepth 1 -mindepth 1 -type d)
+       do DEST="/tmp/$(echo ${SRC} | awk -v DATE=$(date +"%Y%m%d") -F'/' '{print $(NF-1)"_"$NF"_"DATE".tar.xz"}' | sed 's/^_//')"
+          tar cfP - "${SRC}" | xz > "${DEST}" && \
+          if [ "$(du -m "${DEST}" | cut -f1)"  -ge "100" ]
+           then split -d -b 50M "${DEST}" "${DEST}.part"
+                rm "${DEST}" && find "${DEST}"*
+           else echo "${DEST}"
+          fi
+      done 2> /dev/null
+    when: (APACHE.stat.exists)
+    register: APACHE_FILES
+
+  - name: "Add Apache2 archives to FILES list."
+    set_fact:
+      FILES: "{{ FILES }} + [ '{{ item }}' ]"
+    with_items: "{{ APACHE_FILES.stdout_lines }}"
+    when: (APACHE_FILES is defined) and (APACHE_FILES.stdout_lines is defined)
+
+  - name: "Fetch and delete archives from server."
+    block:
+    - name: "Fetch archives from server"
+      fetch:
+        src: "{{ item }}"
+        dest: "{{ BACKUP_DIR }}/{{ inventory_hostname }}/"
+        fail_on_missing: no
+        flat: yes
+      with_items:
+        - "{{ FILES }}"
+    always:
+    - name: "Purge archives files on server."
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ FILES }}"
+    when: (BACKUP_DIR is defined) and (FILES is defined)
+
+  - name: "Locate backup files 90+ days old in archive."
+    find:
+      paths: "{{ BACKUP_DIR }}/{{ inventory_hostname }}"
+      age: "90d"
+    delegate_to: localhost
+    register: files_matched
+
+  - name: "Purge archive of stale backup files."
+    file:
+      path: "{{ item.path }}"
+      state: absent
+    delegate_to: localhost
+    no_log: True
+    with_items: "{{ files_matched.files }}"
+

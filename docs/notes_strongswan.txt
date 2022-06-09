@@ -1,0 +1,11 @@
+Some handy commands to see what's going on with a strongswan-based ipsec connection
+
+# ip -s xfrm state
+# ip route list table 220
+# ip route del table 220 default
+# ipsec status
+
+https://docs.strongswan.org/docs/5.9/features/routeBasedVpn.html#_vti_device_management
+https://docs.strongswan.org/docs/5.9/howtos/introduction.html#_routing
+https://wiki.strongswan.org/projects/strongswan/wiki/Connsection
+https://wiki.strongswan.org/projects/strongswan/wiki/Ipsecsecrets

@@ -1,0 +1,256 @@
+#!/bin/env -S ansible-playbook -i inventory
+---
+- name: "bootstrap debian"
+  hosts: all
+  gather_facts: false
+
+  pre_tasks:
+
+    - name: "Bootstrap system for Ansible"
+      block:
+        - name: "Gather Facts"
+          ansible.builtin.setup:
+      rescue:
+        - name: "Raw install python3"
+          ansible.builtin.raw: test -e /usr/bin/python3 || ( apt update && apt install python3 -y )
+        - name: "Gather Facts"
+          ansible.builtin.setup:
+
+    - name: "Dump Facts"
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ ansible_facts | to_nice_json }}"
+        dest: "~/Sync/ansible_facts.{{ inventory_hostname }}.json"
+      changed_when: false
+
+  tasks:
+
+    - name: "Fail if not Debian"
+      ansible.builtin.fail:
+        msg: "System is not running Debian!"
+      when: ansible_distribution != "Debian"
+
+    ###
+#    - debug:
+#        msg: "{{ lookup('template', './strongswan_ipsec.j2') }}"
+#      when: interface is defined
+
+#    - include_tasks: debian_router.yaml
+#      when: inventory_hostname in groups["bastion"]
+
+#    - meta: end_play
+    ###
+
+    - name: "Set hostname"
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: "User account"
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        shell: "{{ item.shell | default('/bin/bash') }}"
+        uid: "{{ item.uid | default('1000') }}"
+        group: "{{ item.group | default('users') }}"
+        groups: "{{ item.groups | default('users') }}"
+        state: "{{ item.state | default('present')}}"
+      loop: "{{ users }}"
+      when: item.key is defined
+
+    - name: "User authorized_keys"
+      ansible.builtin.authorized_key:
+        user: "{{ item.name }}"
+        key: "{{ item.key }}"
+      loop: "{{ users }}"
+      when: item.key is defined
+
+    - name: "Copy user bootstrap"
+      ansible.builtin.copy:
+        content: "{{ lookup('file', 'bootstrap.' + item.name, errors='ignore') | default() }}"
+        dest: "/home/{{ item.name }}/.bootstrap"
+        owner: "{{ item.name }}"
+        group: root
+        mode: '0600'
+      loop: "{{ users }}"
+
+    - name: /opt/bootstrap.sh
+      get_url:
+        url: https://raw.githubusercontent.com/dna5rm/dna5rm/master/bootstrap.sh
+        dest: /opt/bootstrap.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Add contrib repository
+      ansible.builtin.replace:
+        dest: /etc/apt/sources.list
+        regexp: '^(deb.+)(?<! contrib non-free)$'
+        replace: '\1 contrib non-free'
+
+    - name: "Install debian packages"
+      ansible.builtin.apt:
+        pkg:
+          - apt-transport-https
+          - bc
+          - bind9-dnsutils
+          - build-essential
+          - cargo
+          - certbot
+          - cmake
+          - command-not-found
+          - cron-apt
+          - cryptsetup
+          - curl
+          - dialog
+          - ethtool
+          - exiftool
+          - expect
+          - fdupes
+          - ffmpeg
+          - file
+          - finger
+          - fping
+          - fortune
+          - git
+          - golang
+          - htop
+          - hwinfo
+          - imagemagick
+          - ipcalc
+          - j2cli
+          - jq
+          - ladvd
+          - libffi-dev
+          - librrd-dev
+          - libssl-dev
+          - lsof
+          - man-db
+          - mmdb-bin
+          - moreutils
+          - needrestart
+          - neofetch
+          - net-tools
+          - nfs-common
+          - nmap
+          - nodejs
+          - npm
+          - p7zip
+          - pdfgrep
+          - psmisc
+          - python3-dev
+          - python3-venv
+          - rrdtool
+          - rsync
+          - screen
+          - sqlite3
+          - sshfs
+          - sudo
+          - tcpdump
+          - toilet
+          - ufw
+          - unzip
+          - uuid
+          - vim
+          - wget
+          - whois
+        update_cache: true
+      when: ansible_distribution_major_version | int > 10
+
+    - name: "Configure cron-apt dist-upgrade"
+      ansible.builtin.copy:
+        dest: "/etc/cron-apt/action.d/5-upgrade"
+        owner: root
+        group: root
+        mode: '0644'
+        content: "dist-upgrade -y"
+
+    - name: "Configure cron-apt: needrestart"
+      ansible.builtin.copy:
+        dest: "/etc/cron-apt/action.d/6-needrestart"
+        owner: root
+        group: root
+        mode: '0644'
+        content: ""
+
+    - name: "Configure sudo"
+      ansible.builtin.lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%sudo'
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: "Disable root password"
+      ansible.builtin.user:
+        name: root
+        password: '!'
+
+    - include_tasks: debian_cleanup.yaml
+      when: (ansible_distribution_major_version | int > 10) or
+            (inventory_hostname not in groups["bastion"])
+
+    - local_action: ansible.builtin.stat path=/var/lib/GeoIP/GeoLite2-Country.mmdb
+      register: GeoIP
+
+    - ansible.builtin.copy:
+        src: /var/lib/GeoIP/GeoLite2-Country.mmdb
+        dest: /opt/GeoLite2-Country.mmdb
+      when: GeoIP.stat.exists
+
+    - name: /opt/geowrapper.sh
+      get_url:
+        url: https://raw.githubusercontent.com/dna5rm/dna5rm/master/geowrapper.sh
+        dest: /opt/geowrapper.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: /etc/hosts.allow
+      ansible.builtin.copy:
+        content: |
+          ALL: [2001:470:8:1a7::cafe]
+          ALL: ALL: aclexec /opt/geowrapper.sh %a
+        dest: /etc/hosts.allow
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: /etc/hosts.deny
+      ansible.builtin.copy:
+        content: |
+          ALL: PARANOID
+        dest: /etc/hosts.deny
+        owner: root
+        group: root
+        mode: '0644'
+
+    # Optional Includes
+
+    - include_tasks: debian_interfaces.yaml
+    - include_tasks: debian_ufw.yaml
+      when: ansible_distribution_major_version | int > 10
+
+    - include_tasks: debian_syncthing.yaml
+      when: inventory_hostname not in groups["cloud"]
+
+    - include_tasks: debian_bastion.yaml
+      when: inventory_hostname in groups["bastion"]
+
+    - include_tasks: debian_router.yaml
+      when: inventory_hostname in groups["bastion"]
+
+  handlers:
+
+    - name: restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted
+
+    - name: network services
+      service:
+        name: "{{ item }}"
+        state: "started"
+        enabled: true
+      loop:
+        - frr
+        - snmpd
+        - strongswan-starter
