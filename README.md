@@ -23,7 +23,6 @@ Note: I limit system access via the following methods:
 
 | File/Dir Name | Description |
 | :--- | :--- |
-
 | debian_bastion.yaml    | GeoIP config for Bastion hosts |
 | debian_cleanup.yaml    | Perform cleanup |
 | debian_interfaces.yaml | Configure debian interfaces |
