@@ -130,6 +130,8 @@ dmypy.json
 
 # Ansible: sensitive files
 inventory
+host_vars
 host_vars/
+group_vars
 group_vars/
 bootstrap.*
