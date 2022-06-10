@@ -11,6 +11,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: restart network
   when: interface is defined
 
 - name: Configure network interfaces
@@ -21,4 +22,5 @@
     group: root
     mode: '0644'
   loop: '{{ interface|list }}'
+  notify: restart network
   when: interface is defined

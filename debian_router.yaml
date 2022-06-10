@@ -17,6 +17,7 @@
         - snmpd
         - snmp-mibs-downloader
         - strongswan
+        - strongswan-swanctl
         - vlan
       notify: network services
 

@@ -29,7 +29,7 @@ conn %default
 
 # interface {{ item }} to {{ intf.remote }}
 conn {{ item }}
-      left=%defaultroute
+      left=%any
       right={{ intf.remote }}
       mark={{ item | regex_replace('^vti', '') }}
 {% endif %}{% endfor %}

@@ -30,8 +30,6 @@
         msg: "System is not running Debian!"
       when: ansible_distribution != "Debian"
 
-#    - debug:
-#        msg: "{{ lookup('template', './frr_daemons.j2') }}"
 #    - meta: end_play
 
     - name: Set hostname
@@ -231,7 +229,12 @@
   handlers:
 
     - name: reload strongswan
-      ansible.builtin.command: strongswan reload
+      ansible.builtin.command: ipsec reload
+
+    - name: restart network
+      ansible.builtin.service:
+        name: networking
+        state: restarted
 
     - name: restart frr
       ansible.builtin.service:
