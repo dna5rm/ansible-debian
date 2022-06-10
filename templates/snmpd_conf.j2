@@ -2,8 +2,8 @@
 
 # SECTION: System Information Setup
 
-sysLocation    {{ snmp.location | default('Sitting on the Dock of the Bay') }}
-sysContact     {{ snmp.contact | default('Me <me@example.org>') }}
+sysLocation    {{ router.snmp.location | default('Sitting on the Dock of the Bay') }}
+sysContact     {{ router.snmp.contact | default('Me <me@example.org>') }}
 sysServices    72
 
 # SECTION: Agent Operating Mode
@@ -17,5 +17,5 @@ view   all         included   .1
 #view   systemonly  included   .1.3.6.1.2.1.1
 #view   systemonly  included   .1.3.6.1.2.1.25.1
 
-rocommunity  {{ snmp.community | default('public') }} default -V all
-rocommunity6 {{ snmp.community | default('public') }} public default -V all
+rocommunity  {{ router.snmp.community | default('public') }} default -V all
+rocommunity6 {{ router.snmp.community | default('public') }} public default -V all

@@ -1,64 +1,83 @@
 ---
-- name: Install networking packages
-  ansible.builtin.apt:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - bridge-utils
-    - conntrack
-    - frr
-    - ifenslave
-    - isc-dhcp-server
-    - lldpd
-    - snmp
-    - snmpd
-    - snmp-mibs-downloader
-    - strongswan
-    - vlan
-  notify: network services
+- name: Include router task lists
+  block:
 
-- name: /etc/snmp/snmpd.conf
-  ansible.builtin.copy:
-    content: "{{ lookup('template', './snmpd_conf.j2') }}"
-    dest: /etc/snmp/snmpd.conf
-    owner: root
-    group: root
-    mode: '0600'
-  when: snmp is defined
+    - name: Install network router packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - bridge-utils
+        - conntrack
+        - frr
+        - ifenslave
+        - isc-dhcp-server
+        - lldpd
+        - snmp
+        - snmpd
+        - snmp-mibs-downloader
+        - strongswan
+        - vlan
+      notify: network services
 
-- name: /etc/strongswan.d/ancillary.conf
-  ansible.builtin.copy:
-    content: "{{ lookup('template', './strongswan_conf.j2') }}"
-    dest: /etc/strongswan.d/ancillary.conf
-    owner: root
-    group: root
-    mode: '0644'
-  when: interface|list is search("vti*")
+    - name: /etc/snmp/snmpd.conf
+      ansible.builtin.copy:
+        content: "{{ lookup('template', './snmpd_conf.j2') }}"
+        dest: /etc/snmp/snmpd.conf
+        owner: root
+        group: root
+        mode: '0600'
+      notify: restart snmpd
+      when: router.snmp is defined
 
-- name: /etc/ipsec.conf
-  ansible.builtin.copy:
-    content: "{{ lookup('template', './strongswan_ipsec.j2') }}"
-    dest: /etc/ipsec.conf
-    owner: root
-    group: root
-    mode: '0644'
-  when: interface|list is search("vti*")
+    - name: /etc/strongswan.d/ancillary.conf
+      ansible.builtin.copy:
+        content: "{{ lookup('template', './strongswan_conf.j2') }}"
+        dest: /etc/strongswan.d/ancillary.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload strongswan
+      when: interface|list is search("vti*")
 
-- name: /etc/ipsec.secrets
-  ansible.builtin.copy:
-    content: "{{ lookup('template', './strongswan_secrets.j2') }}"
-    dest: /etc/ipsec.secrets
-    owner: root
-    group: root
-    mode: '0600'
-  when: interface|list is search("vti*")
+    - name: /etc/ipsec.conf
+      ansible.builtin.copy:
+        content: "{{ lookup('template', './strongswan_ipsec.j2') }}"
+        dest: /etc/ipsec.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload strongswan
+      when: interface|list is search("vti*")
 
-- name: Update sysctl for vti interfaces
-  ansible.posix.sysctl:
-    name: net.ipv4.conf.{{ item }}.disable_policy
-    value: '1'
-    sysctl_set: yes
-  loop: '{{ interface|list }}'
-  when:
-    - interface is defined
-    - item is match("vti*")
+    - name: /etc/ipsec.secrets
+      ansible.builtin.copy:
+        content: "{{ lookup('template', './strongswan_secrets.j2') }}"
+        dest: /etc/ipsec.secrets
+        owner: root
+        group: root
+        mode: '0600'
+      notify: reload strongswan
+      when: interface|list is search("vti*")
+
+    - name: Update sysctl for vti interfaces
+      ansible.posix.sysctl:
+        name: net.ipv4.conf.{{ item }}.disable_policy
+        value: '1'
+        sysctl_set: yes
+      loop: '{{ interface|list }}'
+      when:
+        - interface is defined
+        - item is match("vti*")
+
+    - name: /etc/frr/daemons
+      ansible.builtin.copy:
+        content: "{{ lookup('template', './frr_daemons.j2') }}"
+        dest: /etc/frr/daemons
+        owner: frr
+        group: frr
+        mode: '0400'
+      notify: restart frr
+      when: router.daemon is defined
+
+  when: router is defined

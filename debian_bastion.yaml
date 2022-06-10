@@ -1,27 +1,32 @@
 ---
-- name: Install geoipupdate
-  ansible.builtin.apt:
-    pkg: geoipupdate
+- name: Include bastion host tasks
+  block:
 
-- name: /etc/GeoIP.conf
-  ansible.builtin.copy:
-    content: "{{ lookup('template', './geoip_conf.j2') }}"
-    dest: /etc/GeoIP.conf
-    owner: root
-    group: root
-    mode: '0600'
-  when:
-    - maxmind is defined
-    - maxmind.id is defined
-    - maxmind.key is defined
+    - name: Install geoipupdate
+      ansible.builtin.apt:
+        pkg: geoipupdate
 
-- name: Crontab for geoipupdate
-  ansible.builtin.cron:
-    name: geoipupdate
-    special_time: weekly
-    user: root
-    job: "/usr/bin/geoipupdate"
-  when:
-    - maxmind is defined
-    - maxmind.id is defined
-    - maxmind.key is defined
+    - name: /etc/GeoIP.conf
+      ansible.builtin.copy:
+        content: "{{ lookup('template', './geoip_conf.j2') }}"
+        dest: /etc/GeoIP.conf
+        owner: root
+        group: root
+        mode: '0600'
+      when:
+        - bastion.maxmind is defined
+        - bastion.maxmind.id is defined
+        - bastion.maxmind.key is defined
+
+    - name: Crontab for geoipupdate
+      ansible.builtin.cron:
+        name: geoipupdate
+        special_time: weekly
+        user: root
+        job: "/usr/bin/geoipupdate"
+      when:
+        - bastion.maxmind is defined
+        - bastion.maxmind.id is defined
+        - bastion.maxmind.key is defined
+
+  when: bastion is defined

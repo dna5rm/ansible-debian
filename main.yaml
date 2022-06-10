@@ -30,7 +30,9 @@
         msg: "System is not running Debian!"
       when: ansible_distribution != "Debian"
 
-#   - meta: end_play
+#    - debug:
+#        msg: "{{ lookup('template', './frr_daemons.j2') }}"
+#    - meta: end_play
 
     - name: Set hostname
       ansible.builtin.hostname:
@@ -218,17 +220,28 @@
       block:
         - ansible.builtin.include_tasks: debian_interfaces.yaml
         - ansible.builtin.include_tasks: debian_ufw.yaml
-        - ansible.builtin.include_tasks: debian_router.yaml
-          when: inventory_hostname in groups["bastion"]
         - ansible.builtin.include_tasks: debian_bastion.yaml
-          when: inventory_hostname in groups["bastion"]
         - ansible.builtin.include_tasks: debian_syncthing.yaml
           when: inventory_hostname not in groups["cloud"]
+        - ansible.builtin.include_tasks: debian_router.yaml
       always:
         - ansible.builtin.include_tasks: debian_cleanup.yaml
       when: ansible_distribution_major_version | int > 10
 
   handlers:
+
+    - name: reload strongswan
+      ansible.builtin.command: strongswan reload
+
+    - name: restart frr
+      ansible.builtin.service:
+        name: frr
+        state: restarted
+
+    - name: restart snmpd
+      ansible.builtin.service:
+        name: snmpd
+        state: restarted
 
     - name: restart sshd
       ansible.builtin.service:
