@@ -1,5 +1,5 @@
 ---
-- name: debug available interfaces
+- name: List unmanaged interfaces
   ansible.builtin.debug:
     msg: '{{ ansible_facts.interfaces }}'
   when: interface is not defined
@@ -13,7 +13,7 @@
     mode: '0644'
   when: interface is defined
 
-- name: configure interfaces
+- name: Configure network interfaces
   ansible.builtin.copy:
     content: "{{ lookup('template', './interface.j2') }}"
     dest: /etc/network/interfaces.d/{{ item }}

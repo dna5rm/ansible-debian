@@ -1,6 +1,6 @@
 ---
-- name: debian router packages
-  apt:
+- name: Install networking packages
+  ansible.builtin.apt:
     name: "{{ item }}"
     state: present
   with_items:
@@ -17,7 +17,7 @@
     - vlan
   notify: network services
 
-- name: configure snmpd
+- name: /etc/snmp/snmpd.conf
   ansible.builtin.copy:
     content: "{{ lookup('template', './snmpd_conf.j2') }}"
     dest: /etc/snmp/snmpd.conf
@@ -26,7 +26,7 @@
     mode: '0600'
   when: snmp is defined
 
-- name: configure strongswan
+- name: /etc/strongswan.d/ancillary.conf
   ansible.builtin.copy:
     content: "{{ lookup('template', './strongswan_conf.j2') }}"
     dest: /etc/strongswan.d/ancillary.conf
@@ -35,7 +35,7 @@
     mode: '0644'
   when: interface|list is search("vti*")
 
-- name: configure strongswan ipsec.conf
+- name: /etc/ipsec.conf
   ansible.builtin.copy:
     content: "{{ lookup('template', './strongswan_ipsec.j2') }}"
     dest: /etc/ipsec.conf
@@ -44,7 +44,7 @@
     mode: '0644'
   when: interface|list is search("vti*")
 
-- name: configure strongswan ipsec.secrets
+- name: /etc/ipsec.secrets
   ansible.builtin.copy:
     content: "{{ lookup('template', './strongswan_secrets.j2') }}"
     dest: /etc/ipsec.secrets
@@ -53,7 +53,7 @@
     mode: '0600'
   when: interface|list is search("vti*")
 
-- name: vti interface disable_policy
+- name: Update sysctl for vti interfaces
   ansible.posix.sysctl:
     name: net.ipv4.conf.{{ item }}.disable_policy
     value: '1'

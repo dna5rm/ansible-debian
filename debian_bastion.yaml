@@ -15,7 +15,7 @@
     - maxmind.id is defined
     - maxmind.key is defined
 
-- name: Update geoip mmdb crontab
+- name: Crontab for geoipupdate
   ansible.builtin.cron:
     name: geoipupdate
     special_time: weekly

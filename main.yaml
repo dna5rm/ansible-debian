@@ -1,22 +1,22 @@
 #!/bin/env -S ansible-playbook -i inventory
 ---
-- name: "bootstrap debian"
+- name: manage debian host
   hosts: all
   gather_facts: false
 
   pre_tasks:
 
-    - name: "Bootstrap system for Ansible"
+    - name: Bootstrap system for Ansible
       block:
-        - name: "Gather Facts"
+        - name: Gather Facts
           ansible.builtin.setup:
       rescue:
-        - name: "Raw install python3"
+        - name: Raw install python3
           ansible.builtin.raw: test -e /usr/bin/python3 || ( apt update && apt install python3 -y )
-        - name: "Gather Facts"
+        - name: Gather Facts
           ansible.builtin.setup:
 
-    - name: "Dump Facts"
+    - name: Dump Facts
       delegate_to: localhost
       ansible.builtin.copy:
         content: "{{ ansible_facts | to_nice_json }}"
@@ -25,27 +25,18 @@
 
   tasks:
 
-    - name: "Fail if not Debian"
+    - name: Fail if not Debian
       ansible.builtin.fail:
         msg: "System is not running Debian!"
       when: ansible_distribution != "Debian"
 
-    ###
-#    - debug:
-#        msg: "{{ lookup('template', './strongswan_ipsec.j2') }}"
-#      when: interface is defined
+#   - meta: end_play
 
-#    - include_tasks: debian_router.yaml
-#      when: inventory_hostname in groups["bastion"]
-
-#    - meta: end_play
-    ###
-
-    - name: "Set hostname"
+    - name: Set hostname
       ansible.builtin.hostname:
         name: "{{ inventory_hostname }}"
 
-    - name: "User account"
+    - name: User accounts
       ansible.builtin.user:
         name: "{{ item.name }}"
         shell: "{{ item.shell | default('/bin/bash') }}"
@@ -56,14 +47,14 @@
       loop: "{{ users }}"
       when: item.key is defined
 
-    - name: "User authorized_keys"
+    - name: User authorized_keys
       ansible.builtin.authorized_key:
         user: "{{ item.name }}"
         key: "{{ item.key }}"
       loop: "{{ users }}"
       when: item.key is defined
 
-    - name: "Copy user bootstrap"
+    - name: User .bootstrap
       ansible.builtin.copy:
         content: "{{ lookup('file', 'bootstrap.' + item.name, errors='ignore') | default() }}"
         dest: "/home/{{ item.name }}/.bootstrap"
@@ -73,20 +64,20 @@
       loop: "{{ users }}"
 
     - name: /opt/bootstrap.sh
-      get_url:
+      ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/dna5rm/dna5rm/master/bootstrap.sh
         dest: /opt/bootstrap.sh
         owner: root
         group: root
         mode: '0755'
 
-    - name: Add contrib repository
+    - name: Update debian repositories
       ansible.builtin.replace:
         dest: /etc/apt/sources.list
         regexp: '^(deb.+)(?<! contrib non-free)$'
         replace: '\1 contrib non-free'
 
-    - name: "Install debian packages"
+    - name: Install debian packages
       ansible.builtin.apt:
         pkg:
           - apt-transport-https
@@ -155,7 +146,7 @@
         update_cache: true
       when: ansible_distribution_major_version | int > 10
 
-    - name: "Configure cron-apt dist-upgrade"
+    - name: /etc/cron-apt/action.d/5-upgrade
       ansible.builtin.copy:
         dest: "/etc/cron-apt/action.d/5-upgrade"
         owner: root
@@ -163,7 +154,7 @@
         mode: '0644'
         content: "dist-upgrade -y"
 
-    - name: "Configure cron-apt: needrestart"
+    - name: /etc/cron-apt/action.d/6-needrestart
       ansible.builtin.copy:
         dest: "/etc/cron-apt/action.d/6-needrestart"
         owner: root
@@ -171,7 +162,7 @@
         mode: '0644'
         content: ""
 
-    - name: "Configure sudo"
+    - name: /etc/sudoers
       ansible.builtin.lineinfile:
         dest: /etc/sudoers
         state: present
@@ -179,25 +170,25 @@
         line: '%sudo ALL=(ALL) NOPASSWD: ALL'
         validate: 'visudo -cf %s'
 
-    - name: "Disable root password"
+    - name: Disable root password
       ansible.builtin.user:
         name: root
         password: '!'
 
-    - include_tasks: debian_cleanup.yaml
-      when: (ansible_distribution_major_version | int > 10) or
-            (inventory_hostname not in groups["bastion"])
-
-    - local_action: ansible.builtin.stat path=/var/lib/GeoIP/GeoLite2-Country.mmdb
+    - name: Stat GeoLite2-Country.mmdb
+      local_action:
+        module: ansible.builtin.stat
+        path: /var/lib/GeoIP/GeoLite2-Country.mmdb
       register: GeoIP
 
-    - ansible.builtin.copy:
+    - name: /var/lib/GeoIP/GeoLite2-Country.mmdb
+      ansible.builtin.copy:
         src: /var/lib/GeoIP/GeoLite2-Country.mmdb
         dest: /opt/GeoLite2-Country.mmdb
       when: GeoIP.stat.exists
 
     - name: /opt/geowrapper.sh
-      get_url:
+      ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/dna5rm/dna5rm/master/geowrapper.sh
         dest: /opt/geowrapper.sh
         owner: root
@@ -207,7 +198,7 @@
     - name: /etc/hosts.allow
       ansible.builtin.copy:
         content: |
-          ALL: [2001:470:8:1a7::cafe]
+          ALL: {{ ansible_env.SSH_CLIENT.split(' ')[0] | ansible.utils.ipwrap  }}
           ALL: ALL: aclexec /opt/geowrapper.sh %a
         dest: /etc/hosts.allow
         owner: root
@@ -223,20 +214,19 @@
         group: root
         mode: '0644'
 
-    # Optional Includes
-
-    - include_tasks: debian_interfaces.yaml
-    - include_tasks: debian_ufw.yaml
+    - name: Include optional task lists
+      block:
+        - ansible.builtin.include_tasks: debian_interfaces.yaml
+        - ansible.builtin.include_tasks: debian_ufw.yaml
+        - ansible.builtin.include_tasks: debian_router.yaml
+          when: inventory_hostname in groups["bastion"]
+        - ansible.builtin.include_tasks: debian_bastion.yaml
+          when: inventory_hostname in groups["bastion"]
+        - ansible.builtin.include_tasks: debian_syncthing.yaml
+          when: inventory_hostname not in groups["cloud"]
+      always:
+        - ansible.builtin.include_tasks: debian_cleanup.yaml
       when: ansible_distribution_major_version | int > 10
-
-    - include_tasks: debian_syncthing.yaml
-      when: inventory_hostname not in groups["cloud"]
-
-    - include_tasks: debian_bastion.yaml
-      when: inventory_hostname in groups["bastion"]
-
-    - include_tasks: debian_router.yaml
-      when: inventory_hostname in groups["bastion"]
 
   handlers:
 
@@ -246,7 +236,7 @@
         state: restarted
 
     - name: network services
-      service:
+      ansible.builtin.service:
         name: "{{ item }}"
         state: "started"
         enabled: true
