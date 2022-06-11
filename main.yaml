@@ -16,13 +16,6 @@
         - name: Gather Facts
           ansible.builtin.setup:
 
-    - name: Dump Facts
-      delegate_to: localhost
-      ansible.builtin.copy:
-        content: "{{ ansible_facts | to_nice_json }}"
-        dest: "~/Sync/ansible_facts.{{ inventory_hostname }}.json"
-      changed_when: false
-
   tasks:
 
     - name: Fail if not Debian
@@ -30,7 +23,7 @@
         msg: "System is not running Debian!"
       when: ansible_distribution != "Debian"
 
-#    - meta: end_play
+#   - meta: end_play
 
     - name: Set hostname
       ansible.builtin.hostname:
