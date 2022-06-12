@@ -1,0 +1,14 @@
+{%- set intf = ansible_facts | json_query(router.dhcp.interface) -%}
+{%- set ipv4 = (intf.ipv4.address + '/' + intf.ipv4.netmask) | ansible.utils.ipaddr('cidr') -%}
+# dhcpd.conf - Configuration file for ISC dhcpd
+
+ddns-update-style none;
+
+subnet {{ ipv4 | ansible.utils.ipaddr('network') }} netmask {{ ipv4 | ansible.utils.ipaddr('netmask') }} {
+  range {{ ipv4 | ansible.utils.ipaddr(31) | ansible.utils.ipaddr('address') }} {{ ipv4 | ansible.utils.ipaddr(-32) | ansible.utils.ipaddr('address') }};
+  option routers {{ ipv4 | ansible.utils.ipaddr('address') }};
+  option domain-name-servers {% for item in router.dhcp.dns %}{{ item }}{%- if not loop.last -%}, {% endif %}{% endfor %};
+  option domain-name "{{ ansible_facts.domain }}";
+  default-lease-time 600;
+  max-lease-time 7200;
+}

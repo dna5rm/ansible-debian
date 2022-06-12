@@ -23,7 +23,8 @@
         msg: "System is not running Debian!"
       when: ansible_distribution != "Debian"
 
-#   - meta: end_play
+#    - debug: msg="{{ lookup('template', './strongswan_ipsec.j2') }}"
+#    - meta: end_play
 
     - name: Set hostname
       ansible.builtin.hostname:
@@ -222,11 +223,16 @@
   handlers:
 
     - name: reload strongswan
-      ansible.builtin.command: ipsec reload
+      ansible.builtin.command: ipsec reload 2>&1
 
     - name: restart network
       ansible.builtin.service:
         name: networking
+        state: restarted
+
+    - name: restart dhcpd
+      ansible.builtin.service:
+        name: isc-dhcp-server
         state: restarted
 
     - name: restart frr
@@ -244,12 +250,18 @@
         name: sshd
         state: restarted
 
+    - name: restart ufw
+      ansible.builtin.service:
+        name: ufw
+        state: restarted
+
     - name: network services
       ansible.builtin.service:
         name: "{{ item }}"
         state: "started"
         enabled: true
       loop:
+        - isc-dhcp-server
         - frr
         - snmpd
         - strongswan-starter

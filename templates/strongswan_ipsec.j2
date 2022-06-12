@@ -26,10 +26,11 @@ conn %default
 # peer configurations
 {% for item in interface|list %}{% if item.startswith('vti') %}
 {% set intf = interface | json_query(item) %}
+{% for word in intf.inet.config.split() if "." in word %}{% set remote = word %}
 
-# interface {{ item }} to {{ intf.remote }}
+# interface {{ item }} to {{ remote }}
 conn {{ item }}
       left=%any
-      right={{ intf.remote }}
+      right={{ remote }}
       mark={{ item | regex_replace('^vti', '') }}
-{% endif %}{% endfor %}
+{% endfor %}{% endif %}{% endfor %}

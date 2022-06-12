@@ -25,14 +25,24 @@ interface:
         post-down ip tunnel del $IFACE
       method: manual
     psk: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    remote: 203.0.113.75
 maxmind:
   id: 00000000
   key: XXXXXXXXXXXXXXXX
-snmp:
-  community: public
-  contact: root@host.example.com
-  location: in the basement
+router:
+  daemon:
+    - bgpd
+  dhcp:
+    interface: eno2
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+  nat:
+    - 192.168.0.0/24
+    - 192.168.1.0/24
+  snmp:
+    community: public
+    contact: root@host.example.com
+    location: in the basement
 syncthing:
   channel: stable
   listen: '[::]:18384'

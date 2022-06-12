@@ -1,0 +1,12 @@
+{#- Insert in /etc/ufw/before.rules -#}
+# NAT table rules
+*nat
+:POSTROUTING ACCEPT [0:0]
+
+# Forward traffic through {{ ansible_facts.default_ipv4.interface }}
+{% for item in router.nat | list -%}
+-A POSTROUTING -s {{ item | ansible.utils.ipaddr('cidr') }} -o {{ ansible_facts.default_ipv4.interface }} -j MASQUERADE
+{% endfor %}
+
+# End each table with the 'COMMIT' line or these rules won't be processed
+COMMIT
