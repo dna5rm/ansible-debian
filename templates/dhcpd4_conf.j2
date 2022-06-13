@@ -9,6 +9,6 @@ subnet {{ ipv4 | ansible.utils.ipaddr('network') }} netmask {{ ipv4 | ansible.ut
   option routers {{ ipv4 | ansible.utils.ipaddr('address') }};
   option domain-name-servers {% for item in router.dhcp.dns %}{{ item }}{%- if not loop.last -%}, {% endif %}{% endfor %};
   option domain-name "{{ ansible_facts.domain }}";
-  default-lease-time 600;
-  max-lease-time 7200;
+  default-lease-time 86400;
+  max-lease-time 604800;
 }

@@ -20,6 +20,7 @@
         - strongswan
         - strongswan-swanctl
         - vlan
+        - watchdog
       notify: network services
 
     - name: Install network python packages
@@ -144,6 +145,15 @@
         group: root
         mode: '0644'
       notify: restart dhcpd
+      when: router.dhcp is defined
+
+    - name: /usr/local/etc/oui.txt
+      ansible.builtin.get_url:
+        url: https://standards-oui.ieee.org/oui/oui.txt
+        dest: /usr/local/etc/oui.txt
+        owner: root
+        group: root
+        mode: '0755'
       when: router.dhcp is defined
 
   when: router is defined
