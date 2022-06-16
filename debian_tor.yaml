@@ -1,0 +1,17 @@
+---
+- name: Include tor task lists
+  block:
+
+    - name: Install network router packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - nyx
+        - tor
+        - tor-arm
+        - tor-geoipdb
+        - torsocks
+      notify: network services
+
+  when: router is defined

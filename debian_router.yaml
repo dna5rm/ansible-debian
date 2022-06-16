@@ -14,6 +14,7 @@
         - isc-dhcp-server
         - lldpd
         - python3-pip
+        - radvd
         - snmp
         - snmpd
         - snmp-mibs-downloader
@@ -154,6 +155,16 @@
         owner: root
         group: root
         mode: '0755'
+      when: router.dhcp is defined
+
+    - name: /etc/radvd.conf
+      ansible.builtin.copy:
+        content: "{{ lookup('template', './radvd_conf.j2') }}"
+        dest: /etc/radvd.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart radvd
       when: router.dhcp is defined
 
   when: router is defined
