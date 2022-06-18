@@ -23,7 +23,9 @@
         msg: "System is not running Debian!"
       when: ansible_distribution != "Debian"
 
-#    - debug: msg="{{ lookup('template', './strongswan_ipsec.j2') }}"
+#    - ansible.builtin.debug:
+#        msg: "{{ interface }}"
+#      when: interface is search("vrf-id")
 #    - meta: end_play
 
     - name: Set hostname
@@ -111,6 +113,7 @@
           - man-db
           - mmdb-bin
           - moreutils
+          - mtr-tiny
           - needrestart
           - neofetch
           - net-tools
@@ -192,7 +195,8 @@
     - name: /etc/hosts.allow
       ansible.builtin.copy:
         content: |
-          ALL: {{ ansible_env.SSH_CLIENT.split(' ')[0] | ansible.utils.ipwrap  }}
+          ALL: {{ mgmt_safety | default('[::1]') }}
+          ALL: {{ ansible_env.SSH_CLIENT.split(' ')[0] | ansible.utils.ipwrap }}
           ALL: ALL: aclexec /opt/geowrapper.sh %a
         dest: /etc/hosts.allow
         owner: root
