@@ -87,7 +87,8 @@
       ansible.posix.sysctl:
         name: net.ipv4.conf.{{ item }}.disable_policy
         value: '1'
-        sysctl_set: yes
+        ignoreerrors: true
+        sysctl_set: true
       loop: '{{ interface|list }}'
       when:
         - interface is defined

@@ -29,4 +29,6 @@
         - bastion.maxmind.id is defined
         - bastion.maxmind.key is defined
 
+    - ansible.builtin.include_tasks: debian_terraform.yaml
+
   when: bastion is defined

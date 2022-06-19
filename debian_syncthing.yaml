@@ -10,7 +10,8 @@
   ansible.posix.sysctl:
     name: fs.inotify.max_user_watches
     value: '204800'
-    sysctl_set: yes
+    ignoreerrors: true
+    sysctl_set: true
   when: syncthing is defined
 
 - name: Install Syncthing repo

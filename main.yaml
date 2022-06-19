@@ -24,8 +24,7 @@
       when: ansible_distribution != "Debian"
 
 #    - ansible.builtin.debug:
-#        msg: "{{ interface }}"
-#      when: interface is search("vrf-id")
+#        msg: "{{ ansible_architecture }}"
 #    - meta: end_play
 
     - name: Set hostname
