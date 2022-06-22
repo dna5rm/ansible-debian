@@ -184,8 +184,8 @@
       when: GeoIP.stat.exists
 
     - name: /opt/geowrapper.sh
-      ansible.builtin.get_url:
-        url: https://raw.githubusercontent.com/dna5rm/dna5rm/master/geowrapper.sh
+      ansible.builtin.copy:
+        src: geowrapper.sh
         dest: /opt/geowrapper.sh
         owner: root
         group: root
