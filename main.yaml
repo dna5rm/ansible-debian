@@ -75,6 +75,7 @@
     - name: Install debian packages
       ansible.builtin.apt:
         pkg:
+          - atomicparsley
           - apt-transport-https
           - bc
           - bind9-dnsutils
@@ -123,13 +124,16 @@
           - p7zip
           - pdfgrep
           - psmisc
+          - pup
           - python3-dev
           - python3-venv
+          - recode
           - rrdtool
           - rsync
           - screen
           - sqlite3
           - sshfs
+          - steghide
           - sudo
           - tcpdump
           - toilet
