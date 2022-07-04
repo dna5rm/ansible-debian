@@ -62,4 +62,7 @@
     delete: "{{ item.0.delete | default(false) }}"
   loop: "{{ fwpolicy|subelements('src', {'skip_missing': True}) }}"
   no_log: true
-  when: fwpolicy is defined
+  when:
+    - fwpolicy is defined
+    - item.0.port is defined
+    - item.0.proto is defined
