@@ -8,6 +8,7 @@
 
     - name: Fail if network device
       ansible.builtin.fail:
+      no_log: true
       when: ansible_network_os is defined
 
     - name: Bootstrap system for Ansible
@@ -25,6 +26,7 @@
     - name: Fail if not Debian
       ansible.builtin.fail:
         msg: "System is not running Debian!"
+      no_log: true
       when: ansible_distribution != "Debian"
 
 #    - ansible.builtin.debug:
