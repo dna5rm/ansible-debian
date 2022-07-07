@@ -4,5 +4,6 @@
     pkg:
       - geoip-bin
       - geoip-database
+      - vim
     state: absent
     purge: yes
