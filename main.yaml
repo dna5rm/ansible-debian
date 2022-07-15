@@ -138,6 +138,7 @@
           - rrdtool
           - rsync
           - screen
+          - snapd
           - sqlite3
           - sshfs
           - steghide

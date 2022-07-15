@@ -16,3 +16,11 @@
     name: terraform
     state: latest
     update_cache: true
+
+- name: Install Terragrunt snap package
+  community.general.snap:
+    name:
+      - core
+      - terragrunt
+    state: present
+
