@@ -4,6 +4,6 @@
     pkg:
       - geoip-bin
       - geoip-database
-      - vim
+      - neovim
     state: absent
     purge: yes

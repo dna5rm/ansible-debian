@@ -2,6 +2,7 @@
 ---
 - name: manage debian host
   hosts: all
+  become: yes
   gather_facts: false
 
   pre_tasks:
@@ -122,7 +123,6 @@
           - mtr-tiny
           - needrestart
           - neofetch
-          - neovim
           - net-tools
           - nfs-common
           - nmap
@@ -148,6 +148,7 @@
           - ufw
           - unzip
           - uuid
+          - vim
           - wget
           - whois
         update_cache: true
@@ -202,25 +203,36 @@
         group: root
         mode: '0755'
 
-    - name: /etc/hosts.allow
-      ansible.builtin.copy:
-        content: |
-          ALL: {{ mgmt_safety | default('[::1]') }}
-          ALL: {{ ansible_env.SSH_CLIENT.split(' ')[0] | ansible.utils.ipwrap }}
-          ALL: ALL: aclexec /opt/geowrapper.sh %a
-        dest: /etc/hosts.allow
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: /etc/hosts.deny
-      ansible.builtin.copy:
-        content: |
-          ALL: PARANOID
-        dest: /etc/hosts.deny
-        owner: root
-        group: root
-        mode: '0644'
+    - block:
+        - name: /etc/hosts.allow w/SSH_CLIENT
+          ansible.builtin.copy:
+            content: |
+              ALL: {{ mgmt_safety | default('[::1]') }}
+              ALL: {{ ansible_env.SSH_CLIENT.split(' ')[0] | ansible.utils.ipwrap }}
+              ALL: ALL: aclexec /opt/geowrapper.sh %a
+            dest: /etc/hosts.allow
+            owner: root
+            group: root
+            mode: '0644'
+      rescue:
+        - name: /etc/hosts.allow
+          ansible.builtin.copy:
+            content: |
+              ALL: {{ mgmt_safety | default('[::1]') }}
+              ALL: ALL: aclexec /opt/geowrapper.sh %a
+            dest: /etc/hosts.allow
+            owner: root
+            group: root
+            mode: '0644'
+      always:
+        - name: /etc/hosts.deny paranoid
+          ansible.builtin.copy:
+            content: |
+              ALL: PARANOID
+            dest: /etc/hosts.deny
+            owner: root
+            group: root
+            mode: '0644'
 
     - name: Include optional task lists
       block:
