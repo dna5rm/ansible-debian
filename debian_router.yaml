@@ -15,6 +15,7 @@
         - lldpd
         - python3-pip
         - radvd
+        - slurm
         - snmp
         - snmpd
         - snmp-mibs-downloader
