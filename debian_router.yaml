@@ -43,6 +43,17 @@
         - router is defined
         - interface is search("vrf-id")
 
+    - name: Update qdisc for codel
+      ansible.posix.sysctl:
+        name: net.ipv4.conf.{{ item.name }}.disable_policy
+        value: "{{ item.value }}"
+        ignoreerrors: true
+        sysctl_set: true
+      loop:
+        - { name: net.core.default_qdisc, value: fq_codel }
+        - { name: net.ipv4.tcp_sack, value: 1 }
+        - { name: net.ipv4.tcp_dsack, value: 1 }
+
     - name: /etc/snmp/snmpd.conf
       ansible.builtin.copy:
         content: "{{ lookup('template', './snmpd_conf.j2') }}"

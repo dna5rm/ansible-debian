@@ -31,7 +31,7 @@
       when: ansible_distribution != "Debian"
 
 #    - ansible.builtin.debug:
-#        msg: "{{ ansible_architecture }}"
+#        msg: "{{ ansible_distribution_major_version }}"
 #    - meta: end_play
 
     - name: Set hostname
@@ -85,7 +85,6 @@
           - atomicparsley
           - apt-transport-https
           - bc
-          - bind9-dnsutils
           - build-essential
           - cargo
           - certbot
@@ -106,10 +105,12 @@
           - fortune
           - git
           - golang
+          - hdparm
           - htop
           - hwinfo
           - imagemagick
           - ipcalc
+          - ipset
           - j2cli
           - jq
           - ladvd
@@ -123,6 +124,7 @@
           - mtr-tiny
           - needrestart
           - neofetch
+          - neovim
           - net-tools
           - nfs-common
           - nmap
@@ -152,7 +154,7 @@
           - wget
           - whois
         update_cache: true
-      when: ansible_distribution_major_version | int > 10
+      when: (ansible_distribution_major_version | int > 10) or (ansible_distribution_major_version == "unstable")
 
     - name: /etc/cron-apt/action.d/5-upgrade
       ansible.builtin.copy:
@@ -244,7 +246,7 @@
         - ansible.builtin.include_tasks: debian_router.yaml
       always:
         - ansible.builtin.include_tasks: debian_cleanup.yaml
-      when: ansible_distribution_major_version | int > 10
+      when: (ansible_distribution_major_version | int > 10) or (ansible_distribution_major_version == "unstable")
 
   handlers:
 
