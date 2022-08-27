@@ -55,14 +55,12 @@
 
 - name: Update local firewall policy
   community.general.ufw:
-    rule: "{{ item.0.rule | default('allow') }}"
-    port: "{{ item.0.port }}"
-    proto: "{{ item.0.proto }}"
-    from_ip: "{{ item.1 | default('any') }}"
-    delete: "{{ item.0.delete | default(false) }}"
+    rule: "{{ item.0.rule|default('allow') }}"
+    port: "{{ item.0.port|default(omit) }}"
+    proto: "{{ item.0.proto|default('tcp') }}"
+    from_ip: "{{ item.1|default('any') }}"
+    delete: "{{ item.0.delete|default(false) }}"
   loop: "{{ fwpolicy|subelements('src', {'skip_missing': True}) }}"
   no_log: true
   when:
     - fwpolicy is defined
-    - item.0.port is defined
-    - item.0.proto is defined
