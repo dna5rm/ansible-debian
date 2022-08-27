@@ -46,7 +46,7 @@
 
     - name: Update qdisc for codel
       ansible.posix.sysctl:
-        name: net.ipv4.conf.{{ item.name }}.disable_policy
+        name: "{{ item.name }}"
         value: "{{ item.value }}"
         ignoreerrors: true
         sysctl_set: true
