@@ -143,6 +143,7 @@
           - snapd
           - sqlite3
           - sshfs
+          - sshpass
           - steghide
           - sudo
           - tcpdump
