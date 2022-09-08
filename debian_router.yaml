@@ -11,6 +11,7 @@
         - conntrack
         - frr
         - ifenslave
+        - iftop
         - isc-dhcp-server
         - lldpd
         - python3-pip

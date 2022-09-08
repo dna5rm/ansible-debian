@@ -1,3 +1,5 @@
+{%- set intf = ansible_facts | json_query(router.dhcp.interface) -%}
+{%- set ipv4 = (intf.ipv4.address + '/' + intf.ipv4.netmask) | ansible.utils.ipaddr('address') -%}
 # snmpd.conf
 
 # SECTION: System Information Setup
@@ -8,8 +10,8 @@ sysServices    72
 
 # SECTION: Agent Operating Mode
 
-master  agentx
-agentaddress  127.0.0.1,[::1]
+master       agentx
+agentaddress {{ ipv4|default('127.0.0.1') }}
 
 # SECTION: Access Control Setup
 
