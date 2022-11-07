@@ -212,6 +212,11 @@
             content: |
               ALL: {{ mgmt_safety | default('[::1]') }}
               ALL: {{ ansible_env.SSH_CLIENT.split(' ')[0] | ansible.utils.ipwrap }}
+              ALL: 127.0.0.0/8    # SPECIAL-IPV4-LOOPBACK-IANA-RESERVED
+              ALL: 10.0.0.0/8     # PRIVATE-ADDRESS-CBLK-RFC1918-IANA-RESERVED
+              ALL: 172.16.0.0/12  # PRIVATE-ADDRESS-CBLK-RFC1918-IANA-RESERVED
+              ALL: 192.168.0.0/16 # PRIVATE-ADDRESS-CBLK-RFC1918-IANA-RESERVED
+              ALL: 169.254.0.0/16 # LINKLOCAL-RFC3927-IANA-RESERVED
               ALL: ALL: aclexec /opt/geowrapper.sh %a
             dest: /etc/hosts.allow
             owner: root
