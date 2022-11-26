@@ -148,6 +148,7 @@
           - sudo
           - tcpdump
           - toilet
+          - tshark
           - ufw
           - unzip
           - uuid
