@@ -1,4 +1,8 @@
-{%- set intf = ansible_facts | json_query(router.dhcp.interface) -%}
+{% if router.dhcp.interface is defined %}
+{% set intf = ansible_facts | json_query(router.dhcp.interface) %}
+{% else %}
+{% set intf = ansible_facts | json_query(ansible_facts.default_ipv4.alias) %}
+{% endif %}
 {%- set ipv4 = (intf.ipv4.address + '/' + intf.ipv4.netmask) | ansible.utils.ipaddr('address') -%}
 # snmpd.conf
 

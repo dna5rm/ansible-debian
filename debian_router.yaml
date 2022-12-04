@@ -56,7 +56,6 @@
         - { name: net.ipv4.tcp_sack, value: 1 }
         - { name: net.ipv4.tcp_dsack, value: 1 }
 
-    # Will fail if dhcp is not configured.
     - name: /etc/snmp/snmpd.conf
       ansible.builtin.copy:
         content: "{{ lookup('template', './snmpd_conf.j2') }}"

@@ -31,7 +31,9 @@
       when: ansible_distribution != "Debian"
 
 #    - ansible.builtin.debug:
-#        msg: "{{ ansible_distribution_major_version }}"
+#        msg: "{{ ansible_facts.default_ipv4.alias }}"
+#    - ansible.builtin.debug:
+#        msg: "{{ lookup('template', './snmpd_conf.j2') }}"
 #    - meta: end_play
 
     - name: Set hostname
