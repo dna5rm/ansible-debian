@@ -5,4 +5,4 @@
       - geoip-bin
       - geoip-database
     state: absent
-    purge: yes
+    purge: true
