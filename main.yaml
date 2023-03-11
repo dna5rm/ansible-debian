@@ -120,6 +120,7 @@
           - j2cli
           - jq
           - ladvd
+          - libatlas-base-dev
           - libffi-dev
           - librrd-dev
           - libssl-dev
