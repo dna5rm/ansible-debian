@@ -85,7 +85,7 @@
         regexp: '^(deb.+)(?<! contrib non-free)$'
         replace: '\1 contrib non-free'
 
-    - name: Install debian packages
+    - name: Install Debian 11/bullseye packages
       ansible.builtin.apt:
         pkg:
           - atomicparsley
@@ -163,7 +163,7 @@
           - wget
           - whois
         update_cache: true
-      when: (ansible_distribution_major_version | int > 10) or (ansible_distribution_major_version == "unstable")
+      when: (ansible_distribution_major_version | int == 11)
 
     - name: /etc/cron-apt/action.d/5-upgrade
       ansible.builtin.copy:
