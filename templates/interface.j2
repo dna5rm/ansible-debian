@@ -1,8 +1,10 @@
 {%- set intf = interface | json_query(item) -%}
 # {{ ansible_managed }}: host_vars/{{ inventory_hostname }}.yaml :: interface.{{ item }}
-{% if intf != none %}
 
-auto {{ item }}
+{% if (item.startswith('br') or item.startswith('bond')) %}auto {{ item }}
+{% else %}allow-hotplug {{ item }}
+{% endif -%}
+{% if intf != none %}
 {# IPv4 Configuration #}
 {% if intf.inet is defined %}
 iface {{ item }} inet {{ intf.inet.method | default('manual') }}

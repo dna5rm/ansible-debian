@@ -113,6 +113,7 @@
           - file
           - finger
           - fping
+          - fonty-rg
           - fortune
           - git
           - golang
@@ -140,8 +141,8 @@
           - net-tools
           - nfs-common
           - nmap
-          - nodejs
-          - npm
+#         - nodejs
+#         - npm
           - p7zip
           - pdfgrep
           - psmisc
