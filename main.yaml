@@ -93,6 +93,7 @@
     - name: Install apt packages
       ansible.builtin.apt:
         pkg:
+          - argon2
           - atomicparsley
           - apt-transport-https
           - bc
