@@ -1,0 +1,17 @@
+---
+- name: Include openbox task lists
+  block:
+
+    - name: Install openbox packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - obconf
+        - openbox
+        - xfce4-terminal
+        - virt-manager
+
+  when:
+    - kvm is defined
+    - openbox is defined

@@ -1,0 +1,25 @@
+modprobe vhost_net
+
+# Networking
+virsh net-list --all
+
+## default NAT bridge
+virsh net-start default
+virsh net-autostart default
+
+## br0 interface bridge
+cat <<EOF > /root/bridged.xml
+<network>
+  <name>br0</name>
+  <forward mode="bridge"/>
+  <bridge name="br0"/>
+</network>
+EOF
+
+virsh net-start br0
+virsh net-autostart br0
+
+# VM list
+virsh --connect qemu:///system list --all
+
+Config: ~/.config/libvirt/libvirt.conf

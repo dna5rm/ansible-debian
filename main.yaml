@@ -136,6 +136,7 @@
           - mmdb-bin
           - moreutils
           - mtr-tiny
+          - multitail
           - needrestart
           - neofetch
           - neovim
@@ -160,6 +161,7 @@
           - sshpass
           - steghide
           - sudo
+          - sysstat
           - tcpdump
           - toilet
           - tshark
@@ -189,6 +191,13 @@
         group: root
         mode: '0644'
         content: ""
+
+    - name: /etc/default/sysstat
+      ansible.builtin.lineinfile:
+        dest: /etc/default/sysstat
+        state: present
+        regexp: '^ENABLED='
+        line: 'ENABLED="true"'
 
     - name: /etc/sudoers
       ansible.builtin.lineinfile:
@@ -260,6 +269,16 @@
             group: root
             mode: '0644'
 
+    - name: sysstat services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - sysstat
+        - sysstat-collect.timer
+        - sysstat-summary.timer
+
     - name: Check if nordvpn is installed
       ansible.builtin.command: dpkg -s nordvpn
       changed_when: false
@@ -285,6 +304,7 @@
         - ansible.builtin.include_tasks: debian_syncthing.yaml
           when: inventory_hostname not in groups["cloud"]
         - ansible.builtin.include_tasks: debian_router.yaml
+        - ansible.builtin.include_tasks: debian_kvm.yaml
       always:
         - ansible.builtin.include_tasks: debian_cleanup.yaml
       when:

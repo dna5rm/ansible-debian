@@ -1,0 +1,38 @@
+---
+- name: Include kvm task lists
+  block:
+
+    - name: Install kvm packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - bridge-utils
+        - genisoimage
+        - libguestfs-tools
+        - libnss-libvirt
+        - libosinfo-bin
+        - libvirt-clients
+        - libvirt-daemon-system
+        - libvirt-dev
+        - python3-libvirt
+        - python3-lxml
+        - qemu-kvm
+        - qemu-utils
+        - virtinst
+
+    - name: libvert service
+      ansible.builtin.service:
+        name: libvirtd
+        enabled: yes
+        state: started
+
+    - name: adding existing user ansible to group libvirt/-qemu
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        groups: libvirt,libvirt-qemu
+        append: yes
+      loop: "{{ users }}"
+      when: item.key is defined
+
+  when: kvm is defined
