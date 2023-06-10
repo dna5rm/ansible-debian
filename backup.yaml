@@ -1,7 +1,7 @@
 #!/usr/bin/env -S ansible-playbook -i inventory
 ---
 - name: Perform backup of remote host.
-  hosts: root
+  hosts: cloud
   become: yes
   gather_facts: yes
 

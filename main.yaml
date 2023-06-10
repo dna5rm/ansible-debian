@@ -117,6 +117,7 @@
           - fonty-rg
           - fortune
           - git
+          - git-lfs
           - golang
           - hdparm
           - htop

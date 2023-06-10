@@ -9,6 +9,7 @@
       with_items:
         - obconf
         - openbox
+        - ssh-askpass
         - xfce4-terminal
         - virt-manager
 
