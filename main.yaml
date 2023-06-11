@@ -28,7 +28,7 @@
       ansible.builtin.fail:
         msg: "System is not running Debian or Kali!"
       no_log: true
-      when: 
+      when:
         - ansible_distribution != "Debian"
         - ansible_distribution != "Kali"
 
@@ -88,7 +88,7 @@
       ansible.builtin.replace:
         dest: /etc/apt/sources.list
         regexp: '^(deb.+)(?<! contrib non-free)$'
-        replace: '\1 contrib non-free'
+        replace: '\1 contrib non-free non-free-firmware'
 
     - name: Install apt packages
       ansible.builtin.apt:

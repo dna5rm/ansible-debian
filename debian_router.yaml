@@ -26,9 +26,9 @@
         - watchdog
       notify: network services
 
-    - name: Install network python packages
-      ansible.builtin.pip:
-        name: yq
+#   - name: Install network python packages
+#     ansible.builtin.pip:
+#       name: yq
 
     - name: vrf interface scripts
       ansible.builtin.copy:
