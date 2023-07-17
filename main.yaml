@@ -37,9 +37,9 @@
 #    - ansible.builtin.debug:
 #        msg: "{{ lookup('template', './snmpd_conf.j2') }}"
 #    - ansible.builtin.debug:
-#        msg: "{{ ansible_distribution }}"
+#        msg: "{{ ansible_distribution_release }}"
 #    - ansible.builtin.debug:
-#        msg: "{{ ansible_distribution_major_version }}"
+#        msg: "{{ users|list }}"
 #    - meta: end_play
 
     - name: Set hostname
@@ -302,10 +302,13 @@
         - ansible.builtin.include_tasks: debian_interfaces.yaml
         - ansible.builtin.include_tasks: debian_ufw.yaml
         - ansible.builtin.include_tasks: debian_bastion.yaml
+        - ansible.builtin.include_tasks: debian_router.yaml
+        - ansible.builtin.include_tasks: debian_docker.yaml
+          when: inventory_hostname not in groups["cloud"]
+        - ansible.builtin.include_tasks: debian_kvm.yaml
+          when: inventory_hostname not in groups["cloud"]
         - ansible.builtin.include_tasks: debian_syncthing.yaml
           when: inventory_hostname not in groups["cloud"]
-        - ansible.builtin.include_tasks: debian_router.yaml
-        - ansible.builtin.include_tasks: debian_kvm.yaml
       always:
         - ansible.builtin.include_tasks: debian_cleanup.yaml
       when:
@@ -326,6 +329,11 @@
     - name: restart dhcpd
       ansible.builtin.service:
         name: isc-dhcp-server
+        state: restarted
+
+    - name: restart docker
+      ansible.builtin.service:
+        name: docker
         state: restarted
 
     - name: restart frr

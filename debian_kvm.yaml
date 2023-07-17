@@ -27,7 +27,7 @@
         enabled: yes
         state: started
 
-    - name: adding existing user ansible to group libvirt/-qemu
+    - name: Ensure users are added to group libvirt/-qemu
       ansible.builtin.user:
         name: "{{ item.name }}"
         groups: libvirt,libvirt-qemu
