@@ -5,6 +5,13 @@
   become: yes
   gather_facts: false
 
+  collections:
+    - ansible.utils
+    - ansible.netcommon
+    - ansible.posix
+    - community.network
+    - community.general
+
   pre_tasks:
 
     - name: Fail if network device
@@ -60,7 +67,7 @@
       when: item.key is defined
 
     - name: User authorized_keys
-      ansible.builtin.authorized_key:
+      ansible.posix.authorized_key:
         user: "{{ item.name }}"
         key: "{{ item.key }}"
       loop: "{{ users }}"
@@ -199,6 +206,7 @@
         state: present
         regexp: '^ENABLED='
         line: 'ENABLED="true"'
+      when: ((ansible_distribution_major_version | int >= 10) and (ansible_distribution_major_version | int <= 11)) or (ansible_distribution_major_version | int == 2023)
 
     - name: /etc/sudoers
       ansible.builtin.lineinfile:
@@ -214,9 +222,10 @@
         password: '!'
 
     - name: Stat GeoLite2-Country.mmdb
-      local_action:
-        module: ansible.builtin.stat
+      delegate_to: localhost
+      ansible.builtin.stat:
         path: /var/lib/GeoIP/GeoLite2-Country.mmdb
+      become: false
       register: GeoIP
 
     - name: /var/lib/GeoIP/GeoLite2-Country.mmdb
@@ -279,6 +288,7 @@
         - sysstat
         - sysstat-collect.timer
         - sysstat-summary.timer
+      when: ((ansible_distribution_major_version | int >= 10) and (ansible_distribution_major_version | int <= 11)) or (ansible_distribution_major_version | int == 2023)
 
     - name: Check if nordvpn is installed
       ansible.builtin.command: dpkg -s nordvpn
