@@ -126,6 +126,7 @@
           - git
           - git-lfs
           - golang
+          - graphviz
           - hdparm
           - htop
           - hwinfo
