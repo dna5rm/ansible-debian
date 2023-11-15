@@ -7,22 +7,31 @@
         name: "{{ item }}"
         state: present
       with_items:
+        - bmon
         - bridge-utils
+        - cbm
         - conntrack
         - frr
         - ifenslave
         - iftop
         - isc-dhcp-server
         - lldpd
+        - nethogs
+        - netproc
+        - netr
+        - nload
         - python3-pip
         - radvd
         - slurm
         - snmp
         - snmpd
         - snmp-mibs-downloader
+        - speedometer
         - strongswan
         - strongswan-swanctl
+        - tcpstat
         - vlan
+        - vnstat
         - watchdog
       notify: network services
 
