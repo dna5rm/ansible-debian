@@ -108,6 +108,7 @@
           - cargo
           - certbot
           - cmake
+          - cmatrix
           - command-not-found
           - cron-apt
           - cryptsetup
@@ -172,6 +173,7 @@
           - sudo
           - sysstat
           - tcpdump
+          - tmux
           - toilet
           - tshark
           - ufw
